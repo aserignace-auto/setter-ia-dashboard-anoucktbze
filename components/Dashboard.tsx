@@ -93,6 +93,20 @@ export default function Dashboard() {
     fetchLeads();
   };
 
+  const getConversationArray = (historique: any): any[] => {
+    if (!historique) return [];
+    if (Array.isArray(historique)) return historique;
+    if (typeof historique === 'string') {
+      try {
+        const parsed = JSON.parse(historique);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const getStats = () => {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -100,7 +114,10 @@ export default function Dashboard() {
     return {
       total: leads.length,
       newThisWeek: leads.filter(l => new Date(l.created_at) >= sevenDaysAgo).length,
-      totalMessages: leads.reduce((acc, l) => acc + (l.historique_conversation?.filter((msg: any) => msg.role === 'agent').length || 0), 0),
+      totalMessages: leads.reduce((acc, l) => {
+        const conversation = getConversationArray(l.historique_conversation);
+        return acc + conversation.filter((msg: any) => msg.role === 'agent').length;
+      }, 0),
       rdvPris: leads.filter(l => l.statut === 'rdv_pris').length,
     };
   };
